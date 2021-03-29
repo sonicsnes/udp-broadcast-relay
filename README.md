@@ -27,6 +27,7 @@ USAGE
     [--dev eth1...] \
     [--multicast 224.0.0.251] \
     [-s <spoof_source_ip>]
+    [-t <overridden_target_ip>]
 ```
 
 - udp-broadcast-relay-redux must be run as root to be able to create a raw
@@ -40,6 +41,8 @@ USAGE
   is unusual.
 - A special source ip of `-s 1.1.1.1` can be used to set the source ip
   to the address of the outgoing interface.
+- A special destination ip of `-t 255.255.255.255` can be used to set the
+  overriden target ip to the broadcast address of the outgoing interface.
 - `-f` will fork the application to the background.
 
 EXAMPLE
@@ -61,6 +64,21 @@ EXAMPLE
 
 #### Warcraft 3 Server Discovery
 `./udp-broadcast-relay-redux --id 1 --port 6112 --dev eth0 --dev eth1`
+
+#### Relaying broadcasts between two LANs joined by tun-based VPN
+This example is from OpenWRT. Tun-based devices don't forward broadcast packets
+ so temporarily rewriting the destination address (and then re-writing it back)
+ is necessary.
+
+Router 1 (source):
+
+`./udp-broadcast-relay-redux --id 1 --port 6112 --dev br-lan --dev tun0 -t 10.66.2.13`
+
+(where 10.66.2.13 is the IP of router 2 over the tun0 link)
+
+Router 2 (target):
+
+`./udp-broadcast-relay-redux --id 2 --port 6112 --dev br-lan --dev tun0 -t 255.255.255.255`
 
 Note about firewall rules
 ---

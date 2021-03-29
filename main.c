@@ -86,6 +86,7 @@ int main(int argc,char **argv) {
     char* interfaceNames[MAXIFS];
     int interfaceNamesNum = 0;
     in_addr_t spoof_addr = 0;
+    in_addr_t target_addr_override = 0;
 
     /* Address broadcast packet was sent from */
     struct sockaddr_in rcv_addr;
@@ -102,7 +103,7 @@ int main(int argc,char **argv) {
     rcv_msg.msg_controllen = sizeof(pkt_infos);
 
     if(argc < 2) {
-        fprintf(stderr,"usage: %s [-d] [-f] [-s IP] [--id id] [--port udp-port] [--dev dev1]... [--multicast ip]...\n\n",*argv);
+        fprintf(stderr,"usage: %s [-d] [-f] [-s IP] [-t IP] [--id id] [--port udp-port] [--dev dev1]... [--multicast ip]...\n\n",*argv);
         fprintf(stderr,"This program listens for broadcast  packets  on the  specified UDP port\n"
             "and then forwards them to each other given interface.  Packets are sent\n"
             "such that they appear to have come from the original broadcaster, resp.\n"
@@ -116,6 +117,8 @@ int main(int argc,char **argv) {
             "            (helps in some rare cases)\n"
             "            Setting to 1.1.1.2 uses outgoing interface address and source port.\n"
             "            (helps in some rare cases)\n"
+            "    -t      sets the destination IP of forwarded packets; otherwise the\n"
+            "            original target is used\n"
             "\n"
         );
         exit(1);
@@ -141,10 +144,20 @@ int main(int argc,char **argv) {
             i++;
             spoof_addr = inet_addr(argv[i]);
             if (spoof_addr == INADDR_NONE) {
-                fprintf (stderr,"invalid IP address: %s\n", argv[i]);
+                fprintf (stderr,"invalid source IP address: %s\n", argv[i]);
                 exit(1);
             }
             DPRINT ("Outgoing source IP set to %s\n", argv[i]);
+        }
+        else if (strcmp(argv[i],"-t") == 0) {
+            struct in_addr converted;
+            i++;
+            if (inet_aton(argv[i], &converted) == 0) {
+                fprintf (stderr,"invalid target IP address: %s\n", argv[i]);
+                exit(1);
+            }
+            target_addr_override = converted.s_addr;
+            DPRINT ("Outgoing target IP set to %s\n", argv[i]);
         }
         else if (strcmp(argv[i],"--id") == 0) {
             i++;
@@ -540,7 +553,16 @@ int main(int argc,char **argv) {
             }
 
             struct in_addr toAddress;
-            if (rcv_inaddr.s_addr == INADDR_BROADCAST
+            if (target_addr_override) {
+                // user instructed us to override the target IP address
+                if (target_addr_override == INADDR_BROADCAST) {
+                    // rewrite to new interface broadcast addr if user specified 255.255.255.0
+                    toAddress = iface->dstaddr;
+                } else {
+                    // else rewrite to specified value
+                    toAddress.s_addr = target_addr_override;
+                }
+            } else if (rcv_inaddr.s_addr == INADDR_BROADCAST
                 || rcv_inaddr.s_addr == fromIface->dstaddr.s_addr) {
                 // Received on interface broadcast address -- rewrite to new interface broadcast addr
                 toAddress = iface->dstaddr;
