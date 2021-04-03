@@ -118,7 +118,9 @@ int main(int argc,char **argv) {
             "            Setting to 1.1.1.2 uses outgoing interface address and source port.\n"
             "            (helps in some rare cases)\n"
             "    -t      sets the destination IP of forwarded packets; otherwise the\n"
-            "            original target is used\n"
+            "            original target is used.\n"
+            "            Setting to 255.255.255.255 uses the broadcast address of the\n"
+            "            outgoing interface.\n"
             "\n"
         );
         exit(1);
