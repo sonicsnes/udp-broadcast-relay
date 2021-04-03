@@ -26,7 +26,7 @@ USAGE
     --dev eth0 \
     [--dev eth1...] \
     [--multicast 224.0.0.251] \
-    [-s <spoof_source_ip>]
+    [-s <spoof_source_ip>] \
     [-t <overridden_target_ip>]
 ```
 
