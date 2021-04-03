@@ -556,7 +556,7 @@ int main(int argc,char **argv) {
             if (target_addr_override) {
                 // user instructed us to override the target IP address
                 if (target_addr_override == INADDR_BROADCAST) {
-                    // rewrite to new interface broadcast addr if user specified 255.255.255.0
+                    // rewrite to new interface broadcast addr if user specified 255.255.255.255
                     toAddress = iface->dstaddr;
                 } else {
                     // else rewrite to specified value
